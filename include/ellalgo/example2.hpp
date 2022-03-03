@@ -48,7 +48,7 @@ mod tests {
             max_iter : 2000,
             tol : 1e-12,
         };
-        const auto(feasible, _niter, _status) = cutting_plane_feas(oracle, ell, options);
+        const auto [feasible, _niter, _status] = cutting_plane_feas(oracle, ell, options);
         assert(feasible);
     }
 };

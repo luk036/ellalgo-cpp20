@@ -62,7 +62,7 @@ mod tests {
             max_iter : 2000,
             tol : 1e-10,
         };
-        const auto(x_opt, _niter, _status) = cutting_plane_optim(oracle, ell, t, options);
+        const auto [x_opt, _niter, _status] = cutting_plane_optim(oracle, ell, t, options);
         if (const auto Some(x) = x_opt) {
             assert(x[0] >= 0.0);
         } else {
@@ -81,7 +81,7 @@ mod tests {
             max_iter : 2000,
             tol : 1e-12,
         };
-        const auto(x_opt, _niter, status) = cutting_plane_optim(oracle, ell, t, options);
+        const auto [x_opt, _niter, status] = cutting_plane_optim(oracle, ell, t, options);
         if (const auto Some(_x) = x_opt) {
             assert(false);
         } else {
@@ -98,7 +98,7 @@ mod tests {
             max_iter : 2000,
             tol : 1e-12,
         };
-        const auto(x_opt, _niter, status) = cutting_plane_optim(oracle, ell, 100.0, options);
+        const auto [x_opt, _niter, status] = cutting_plane_optim(oracle, ell, 100.0, options);
         if (const auto Some(_x) = x_opt) {
             assert(false);
         } else {

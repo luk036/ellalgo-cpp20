@@ -17,21 +17,25 @@ using Arr2 = xt::xarray<double, xt::layout_type::row_major>;
  */
 // #[derive(Debug, Clone)]
 class EllStable {
-    using Self = Ell;
+    using Self = EllStable;
     using Parallel = std::pair<double, std::optional<double>>;
 
     Arr2 mq;
-    Arr1 xc;
+    Arr1 xc_;
     double kappa;
     size_t n;
     EllCalc helper;
 
   public:
+    using ArrayType = Arr1;
+
     bool no_defer_trick;
 
     EllStable(double kappa, Arr2 mq, Arr1 xc);
 
     EllStable(Arr1 val, Arr1 xc);
+
+    EllStable(double alpha, Arr1 xc);
 
     auto update_single(const Arr1& grad, const double& beta) -> std::pair<CutStatus, double>;
 
@@ -42,17 +46,17 @@ class EllStable {
      *
      * @return Arr1
      */
-    auto xc() const -> Self::ArrayType { return this->xc; }
+    auto xc() const -> Self::ArrayType { return this->xc_; }
 
     template <typename T> auto update(const std::pair<Self::ArrayType, T>& cut)
         -> std::pair<CutStatus, double> {
-        const auto(grad, beta) = cut;
-        if constexpr (std::is_same_t<T, double>) {
+        const auto [grad, beta] = cut;
+        if constexpr (std::is_same_v<T, double>) {
             return this->update_single(grad, beta);
-        } else if constexpr (std::is_same_t<T, Parallel>) {
+        } else if constexpr (std::is_same_v<T, Parallel>) {
             return this->update_parallel(grad, beta);
         } else {
-            static_assert(false, "Not supported type");
+            // static_assert(false, "Not supported type");
             return {CutStatus::NoSoln, 0.0};
         }
     }

@@ -2,7 +2,7 @@
 
 #include "ell_config.hpp"
 #include <utility>  // for pair
-#include "range.hpp"
+#include "py2cpp/range.hpp"
 
 /**
  * @brief Find a point in a convex set (defined through a cutting-plane oracle).
@@ -31,11 +31,11 @@
 template <typename T, typename Oracle, typename Space>
 requires UpdateByCutChoices<T> && OracleFeas<Oracle> && SearchSpace<Space>
 auto cutting_plane_feas(Oracle& omega, Space& ss, const Options& options) -> CInfo {
-    for (auto niter : range(1, options.max_iter)) {
-        const auto cut_option = omega.assess_feas(ss.xc());  // query the oracle at &ss.xc()
-        if (const auto Some(cut) = cut_option) {
+    for (auto niter : py::range(1, options.max_iter)) {
+        const auto cut = omega.assess_feas(ss.xc());  // query the oracle at &ss.xc()
+        if (!cut) {
             // feasible sol'n obtained
-            const auto(cutstatus, tsq) = ss.update::<T>(cut);  // update ss
+            const auto [cutstatus, tsq] = ss.update<T>(*cut);  // update ss
             if (cutstatus != CutStatus::Success) {
                 return {false, niter, cutstatus};
             }
@@ -69,14 +69,14 @@ auto cutting_plane_optim(Oracle& omega, Space& ss, double& t, const Options& opt
     auto x_best : Option<Oracle::ArrayType> = None;
     auto status = CutStatus::NoSoln;
 
-    for (auto niter : range(1, options.max_iter)) {
-        const auto(cut, shrunk) = omega.assess_optim(ss.xc(), t);  // query the oracle at &ss.xc()
+    for (auto niter : py::range(1, options.max_iter)) {
+        const auto [cut, shrunk] = omega.assess_optim(ss.xc(), t);  // query the oracle at &ss.xc()
         if (shrunk) {
             // best t obtained
             x_best = Some(ss.xc());
             status = CutStatus::Success;
         }
-        const auto(cutstatus, tsq) = ss.update::<T>(cut);  // update ss
+        const auto [cutstatus, tsq] = ss.update<T>(cut);  // update ss
         if (cutstatus != CutStatus::Success) {
             return {x_best, niter, cutstatus};
         }
@@ -120,14 +120,14 @@ auto cutting_plane_q(Oracle& omega, Space& ss, double& t, const Options& options
     auto status = CutStatus::NoSoln;  // note!!!
     auto retry = false;
 
-    for (auto niter : range(1, options.max_iter)) {
+    for (auto niter : py::range(1, options.max_iter)) {
         const auto(cut, shrunk, x0, more_alt)
             = omega.assess_q(ss.xc(), t, retry);  // query the oracle at &ss.xc()
         if (shrunk) {
             // best t obtained
             x_best = Some(x0);  // x0
         }
-        const auto(cutstatus, tsq) = ss.update::<T>(cut);  // update ss
+        const auto [cutstatus, tsq] = ss.update<T>(cut);  // update ss
         match& cutstatus {
             CutStatus::NoEffect = > {
                 if (!more_alt) {
@@ -165,7 +165,7 @@ auto besearch<Oracle>(Oracle& omega, std::pair<T, T>& intvl, const& Options opti
     assert(lower <= upper);
     const auto u_orig = upper;
 
-    for (auto niter : range(1, options.max_iter)) {
+    for (auto niter : py::range(1, options.max_iter)) {
         const auto tau = (upper - lower) / 2.0;
         if (tau < options.tol) {
             return {upper != u_orig, niter, CutStatus::SmallEnough};

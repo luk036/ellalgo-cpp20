@@ -1,0 +1,4 @@
+Scanning dependencies of target EllAlgo
+[ 25%] Building CXX object CMakeFiles/EllAlgo.dir/source/ell_stable.cpp.o
+[ 50%] Linking CXX static library libEllAlgo.a
+[100%] Built target EllAlgo

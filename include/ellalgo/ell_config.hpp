@@ -1,5 +1,9 @@
 #pragma once
 
+#include <utility>  // for pair
+#include <cstddef>
+#include <concepts>
+
 // using CInfo = (bool, size_t, CutStatus);
 
 struct Options {
@@ -22,49 +26,58 @@ enum CutStatus {
     SmallEnough,
 };
 
-/// TODO: support 1D problems
-
-trait UpdateByCutChoices<SS> {
-    typename ArrayType;  // double for 1D; ndarray::Arr1 for general
-
-    auto update_by(SS & ss, const Self::ArrayType& grad)->std::pair<CutStatus, double>;
+/**
+ * @brief CInfo
+ *
+ */
+struct CInfo {
+    bool feasible;
+    size_t num_iters;
+    CutStatus status;
 };
 
+// trait UpdateByCutChoices<SS> {
+//     typename ArrayType;  // double for 1D; ndarray::Arr1 for general
+//     auto update_by(SS & ss, const Self::ArrayType& grad)->std::pair<CutStatus, double>;
+// };
+
 /// Oracle for feasibility problems
-trait OracleFeas {
-    typename ArrayType;   // double for 1D; ndarray::Arr1 for general
-    typename CutChoices;  // double for single cut; (double, Option<double) for parallel cut
-    auto assess_feas(const Self::ArrayType& x)->Option<(Self::ArrayType, Self::CutChoices)>;
+template <class Oracle>
+concept OracleFeas = requires(Oracle omega, const typename Oracle::ArrayType& x) {
+    typename Oracle::ArrayType;   // double for 1D; ndarray::Arr1 for general
+    typename Oracle::CutChoices;  // double for single cut; (double, Option<double) for parallel cut
+    { omega.assess_feas(x) }
+        -> std::convertible_to<std::pair<std::pair<typename Oracle::ArrayType, typename Oracle::CutChoices>, bool>>;
 };
 
 /// Oracle for optimization problems
-trait OracleOptim {
-    typename ArrayType;   // double for 1D; ndarray::Arr1 for general
-    typename CutChoices;  // double for single cut; (double, Option<double) for parallel cut
-    auto assess_optim(
-
-        const Self::ArrayType& x, double& t, )
-        ->((Self::ArrayType, Self::CutChoices), bool);
+template <class Oracle>
+concept OracleOptim = requires(Oracle omega, const typename Oracle::ArrayType& x, double& t) {
+    typename Oracle::ArrayType;   // double for 1D; ndarray::Arr1 for general
+    typename Oracle::CutChoices;  // double for single cut; (double, Option<double) for parallel cut
+    { omega.assess_optim(x, t) } 
+        -> std::convertible_to<std::pair<std::pair<typename Oracle::ArrayType, typename Oracle::CutChoices>, bool>>;
 };
 
 /// Oracle for quantized optimization problems
-trait OracleQ {
-    typename ArrayType;   // double for 1D; ndarray::Arr1 for general
-    typename CutChoices;  // double for single cut; (double, Option<double) for parallel cut
-    auto assess_q(
-
-        const Self::ArrayType& x, double& t, bool retry;)
-        ->((Self::ArrayType, Self::CutChoices), bool, Self::ArrayType, bool, );
+template <class Oracle>
+concept OracleQ = requires(Oracle omega, const typename Oracle::ArrayType& x, double& t, bool retry) {
+    typename Oracle::ArrayType;   // double for 1D; ndarray::Arr1 for general
+    typename Oracle::CutChoices;  // double for single cut; (double, Option<double) for parallel cut
+    { omega.assess_q(x, t, retry) }
+        -> std::convertible_to<std::tuple<std::pair<typename Oracle::ArrayType, typename Oracle::CutChoices>, bool, typename Oracle::ArrayType, bool>>;
 };
 
 /// Oracle for binary search
-trait OracleBS { auto assess_bs(double t)->bool; };
+template <class Oracle>
+concept OracleBS = requires(Oracle omega, double& t) {
+    { omega.assess_bs(t) } -> std::convertible_to<bool>;
+};
 
-trait SearchSpace {
-    typename ArrayType;  // double for 1D; ndarray::Arr1 for general
-    auto xc() const->Self::ArrayType;
-    auto update<T>((const Self::ArrayType&cut, T))
-        ->std::pair<CutStatus, double>
-            where UpdateByCutChoices<Self T, ArrayType = Self::ArrayType>,
-        Self : Sized;
+template <class Space, typename T>
+concept SearchSpace = requires(Space ss, const std::pair<typename Space::ArrayType, T>& cut) {
+    typename Space::ArrayType;  // double for 1D; ndarray::Arr1 for general
+    { ss.xc() } -> std::convertible_to<typename Space::ArrayType>;
+    { ss.update(cut) }
+        -> std::convertible_to<std::pair<CutStatus, double>>;
 };

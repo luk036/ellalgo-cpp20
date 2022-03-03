@@ -12,7 +12,7 @@ use crate::cutting_plane::{CutStatus, SearchSpace, UpdateByCutChoices};
 // #[derive(Debug, Clone)]
 class Ell1D {
     double r;
-    double xc;
+    double xc_;
 };
 
 impl Ell1D{/**
@@ -31,7 +31,7 @@ Ell1D { r, xc }
  *
  * @param[in] xc
  */
-auto set_xc(double xc) { this->xc = xc; }
+auto set_xc(double xc) { this->xc_ = xc; }
 
 /**
  * @brief Update ellipsoid core function using the cut
@@ -52,7 +52,7 @@ auto update_single(const double& grad, double) -> (const CutStatus& b0, double) 
 
     if (beta == 0.0) {
         this->r /= 2.0;
-        this->xc += if (g > 0.0) { -this->r }
+        this->xc_ += if (g > 0.0) { -this->r }
         else {this->r};
         return {CutStatus::Success, tsq};
     }
@@ -63,14 +63,14 @@ auto update_single(const double& grad, double) -> (const CutStatus& b0, double) 
         return {CutStatus::NoEffect, tsq};  // no effect
     }
 
-    const auto bound = this->xc - beta / g;
+    const auto bound = this->xc_ - beta / g;
     const auto u = if (g > 0.0) { bound }
-    else {this->xc + this->r};
-    const auto l = if (g > 0.0) { this->xc - this->r }
+    else {this->xc_ + this->r};
+    const auto l = if (g > 0.0) { this->xc_ - this->r }
     else {bound};
 
     this->r = (u - l) / 2.0;
-    this->xc = l + this->r;
+    this->xc_ = l + this->r;
     return {CutStatus::Success, tsq};
 }
 }
@@ -84,13 +84,13 @@ impl SearchSpace for Ell1D {
      *
      * @return double
      */
-    auto xc() const->double { this->xc }
+    auto xc() const->double { this->xc_ }
 
     auto update<T>((const Self::ArrayType&cut, T))
         ->std::pair<CutStatus, double>
             where UpdateByCutChoices<Self T, ArrayType = Self::ArrayType>,
     {
-        const auto(grad, beta) = cut;
+        const auto [grad, beta] = cut;
         beta.update_by(self, grad)
     }
 };

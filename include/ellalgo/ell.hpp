@@ -20,10 +20,10 @@ class Ell {
     using Self = Ell;
     using Parallel = std::pair<double, std::optional<double>>;
 
-    Arr2 mq;
-    Arr1 xc;
-    double kappa;
     size_t n;
+    Arr2 mq;
+    Arr1 xc_;
+    double kappa;
     EllCalc helper;
 
   public:
@@ -35,6 +35,8 @@ class Ell {
 
     Ell(Arr1 val, Arr1 xc);
 
+    Ell(double alpha, Arr1 xc);
+
     auto update_single(const Arr1& grad, const double& beta) -> std::pair<CutStatus, double>;
 
     auto update_parallel(const Arr1& grad, const Parallel& beta) -> std::pair<CutStatus, double>;
@@ -44,17 +46,17 @@ class Ell {
      *
      * @return Arr1
      */
-    auto xc() const -> Self::ArrayType { return this->xc; }
+    auto xc() const -> Arr1 { return this->xc_; }
 
-    template <typename T> auto update(const std::pair<Self::ArrayType, T>& cut)
+    template <typename T> auto update(const std::pair<Arr1, T>& cut)
         -> std::pair<CutStatus, double> {
-        const auto(grad, beta) = cut;
-        if constexpr (std::is_same_t<T, double>) {
+        const auto [grad, beta] = cut;
+        if constexpr (std::is_same_v<T, double>) {
             return this->update_single(grad, beta);
-        } else if constexpr (std::is_same_t<T, Parallel>) {
+        } else if constexpr (std::is_same_v<T, Parallel>) {
             return this->update_parallel(grad, beta);
         } else {
-            static_assert(false, "Not supported type");
+            // static_assert(false, "Not supported type");
             return {CutStatus::NoSoln, 0.0};
         }
     }
