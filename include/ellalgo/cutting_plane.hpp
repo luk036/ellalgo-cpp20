@@ -1,84 +1,8 @@
-// use ndarray::prelude::*;
-// using Arr = Array1<double>;
+#pragma once
 
-using CInfo = (bool, size_t, CutStatus);
-
-struct Options {
-    pub size_t max_iter;
-    pub double tol;
-};
-
-/*
-#[derive(Debug, Clone, Copy)]
-pub enum CutChoices {
-    Single(double),
-    Parallel(double, Option<double>),
-};
-*/
-#[derive(Debug, PartialEq, Eq)]
-pub enum CutStatus {
-    Success,
-    NoSoln,
-    NoEffect,
-    SmallEnough,
-};
-
-/// TODO: support 1D problems
-
-pub trait UpdateByCutChoices<SS> {
-    typename ArrayType; // double for 1D; ndarray::Array1<double> for general
-
-    auto update_by(SS& ss, const Self::ArrayType& grad) -> (CutStatus, double);
-};
-
-/// Oracle for feasibility problems
-pub trait OracleFeas {
-    typename ArrayType; // double for 1D; ndarray::Array1<double> for general
-    typename CutChoices; // double for single cut; (double, Option<double) for parallel cut
-    auto assess_feas(const Self::ArrayType& x) -> Option<(Self::ArrayType, Self::CutChoices)>;
-};
-
-/// Oracle for optimization problems
-pub trait OracleOptim {
-    typename ArrayType; // double for 1D; ndarray::Array1<double> for general
-    typename CutChoices; // double for single cut; (double, Option<double) for parallel cut
-    auto assess_optim(
-        
-        const Self::ArrayType& x,
-        double& t,
-    ) -> ((Self::ArrayType, Self::CutChoices), bool);
-};
-
-/// Oracle for quantized optimization problems
-pub trait OracleQ {
-    typename ArrayType; // double for 1D; ndarray::Array1<double> for general
-    typename CutChoices; // double for single cut; (double, Option<double) for parallel cut
-    auto assess_q(
-        
-        const Self::ArrayType& x,
-        double& t,
-        bool retry;
-    ) -> (
-        (Self::ArrayType, Self::CutChoices),
-        bool,
-        Self::ArrayType,
-        bool,
-    );
-};
-
-/// Oracle for binary search
-pub trait OracleBS {
-    auto assess_bs(double t) -> bool;
-};
-
-pub trait SearchSpace {
-    typename ArrayType; // double for 1D; ndarray::Array1<double> for general
-    auto xc() const -> Self::ArrayType;
-    auto update<T>((const Self::ArrayType& cut, T)) -> (CutStatus, double)
-    where
-        UpdateByCutChoices<Self T, ArrayType = Self::ArrayType>,
-        Self: Sized;
-};
+#include "ell_config.hpp"
+#include <utility>  // for pair
+#include "range.hpp"
 
 /**
  * @brief Find a point in a convex set (defined through a cutting-plane oracle).
@@ -103,22 +27,15 @@ pub trait SearchSpace {
  * @param[in] options   maximum iteration and error tolerance etc.
  * @return Information of Cutting-plane method
  */
-#[allow(dead_code)]
-auto cutting_plane_feas<T, Oracle, Space>(
-    Oracle& omega,
-    Space& ss,
-    const Options& options,
-) -> CInfo
-where
-    UpdateByCutChoices<Space T, ArrayType = Oracle::ArrayType>,
-    Oracle: OracleFeas<CutChoices = T>,
-    Space: SearchSpace<ArrayType = Oracle::ArrayType>,
-{
+// #[allow(dead_code)]
+template <typename T, typename Oracle, typename Space>
+requires UpdateByCutChoices<T> && OracleFeas<Oracle> && SearchSpace<Space>
+auto cutting_plane_feas(Oracle& omega, Space& ss, const Options& options) -> CInfo {
     for (auto niter : range(1, options.max_iter)) {
-        const auto cut_option = omega.assess_feas(ss.xc()); // query the oracle at &ss.xc()
+        const auto cut_option = omega.assess_feas(ss.xc());  // query the oracle at &ss.xc()
         if (const auto Some(cut) = cut_option) {
             // feasible sol'n obtained
-            const auto (cutstatus, tsq) = ss.update::<T>(cut); // update ss
+            const auto(cutstatus, tsq) = ss.update::<T>(cut);  // update ss
             if (cutstatus != CutStatus::Success) {
                 return {false, niter, cutstatus};
             }
@@ -144,29 +61,22 @@ where
  * @param[in] options   maximum iteration and error tolerance etc.
  * @return Information of Cutting-plane method
  */
-#[allow(dead_code)]
-auto cutting_plane_optim<T, Oracle, Space>(
-    Oracle& omega,
-    Space& ss,
-    double& t,
-    const Options& options,
-) -> (Option<Oracle::ArrayType>, size_t, CutStatus)
-where
-    UpdateByCutChoices<Space T, ArrayType = Oracle::ArrayType>,
-    Oracle: OracleOptim<CutChoices = T>,
-    Space: SearchSpace<ArrayType = Oracle::ArrayType>,
-{
-    auto x_best: Option<Oracle::ArrayType> = None;
+// #[allow(dead_code)]
+template <typename T, typename Oracle, typename Space>
+requires UpdateByCutChoices<T> && OracleOptim<Oracle> && SearchSpace<Space>
+auto cutting_plane_optim(Oracle& omega, Space& ss, double& t, const Options& options)
+    -> (Option<Oracle::ArrayType>, size_t, CutStatus) {
+    auto x_best : Option<Oracle::ArrayType> = None;
     auto status = CutStatus::NoSoln;
 
     for (auto niter : range(1, options.max_iter)) {
-        const auto (cut, shrunk) = omega.assess_optim(ss.xc(), t); // query the oracle at &ss.xc()
+        const auto(cut, shrunk) = omega.assess_optim(ss.xc(), t);  // query the oracle at &ss.xc()
         if (shrunk) {
             // best t obtained
             x_best = Some(ss.xc());
             status = CutStatus::Success;
         }
-        const auto (cutstatus, tsq) = ss.update::<T>(cut); // update ss
+        const auto(cutstatus, tsq) = ss.update::<T>(cut);  // update ss
         if (cutstatus != CutStatus::Success) {
             return {x_best, niter, cutstatus};
         }
@@ -175,7 +85,7 @@ where
         }
     }
     return {x_best, options.max_iter, status};
-} // END
+}  // END
 
 /**
     Cutting-plane method for solving convex discrete optimization problem
@@ -201,31 +111,25 @@ where
  * @param[in] options   maximum iteration and error tolerance etc.
  * @return Information of Cutting-plane method
  */
-#[allow(dead_code)]
-auto cutting_plane_q<T, Oracle, Space>(
-    Oracle& omega,
-    Space& ss,
-    double& t,
-    const Options& options,
-) -> (Option<Oracle::ArrayType>, size_t, CutStatus)
-where
-    UpdateByCutChoices<Space T, ArrayType = Oracle::ArrayType>,
-    Oracle: OracleQ<CutChoices = T>,
-    Space: SearchSpace<ArrayType = Oracle::ArrayType>,
-{
-    auto x_best: Option<Oracle::ArrayType> = None;
-    auto status = CutStatus::NoSoln; // note!!!
+// #[allow(dead_code)]
+template <typename T, typename Oracle, typename Space>
+requires UpdateByCutChoices<T> && OracleQ<Oracle> && SearchSpace<Space>
+auto cutting_plane_q(Oracle& omega, Space& ss, double& t, const Options& options)
+    -> (Option<Oracle::ArrayType>, size_t, CutStatus) {
+    auto x_best : Option<Oracle::ArrayType> = None;
+    auto status = CutStatus::NoSoln;  // note!!!
     auto retry = false;
 
     for (auto niter : range(1, options.max_iter)) {
-        const auto (cut, shrunk, x0, more_alt) = omega.assess_q(ss.xc(), t, retry); // query the oracle at &ss.xc()
+        const auto(cut, shrunk, x0, more_alt)
+            = omega.assess_q(ss.xc(), t, retry);  // query the oracle at &ss.xc()
         if (shrunk) {
             // best t obtained
-            x_best = Some(x0); // x0
+            x_best = Some(x0);  // x0
         }
-        const auto (cutstatus, tsq) = ss.update::<T>(cut); // update ss
-        match &cutstatus {
-            CutStatus::NoEffect => {
+        const auto(cutstatus, tsq) = ss.update::<T>(cut);  // update ss
+        match& cutstatus {
+            CutStatus::NoEffect = > {
                 if (!more_alt) {
                     // more alt?
                     return {x_best, niter, status};
@@ -233,17 +137,15 @@ where
                 status = cutstatus;
                 retry = true;
             }
-            CutStatus::NoSoln => {
-                return {x_best, niter, CutStatus::NoSoln};
-            }
-            _ => {}
+            CutStatus::NoSoln = > { return {x_best, niter, CutStatus::NoSoln}; }
+            _ = > {}
         }
         if (tsq < options.tol) {
             return {x_best, niter, CutStatus::SmallEnough};
         }
     }
     return {x_best, options.max_iter, status};
-} // END
+}  // END
 
 /**
  * @brief
@@ -255,27 +157,20 @@ where
  * @param[in]     options  maximum iteration and error tolerance etc.
  * @return CInfo
  */
-#[allow(dead_code)]
-auto besearch<Oracle>(Oracle& omega, mut (const double& intvl, double), &Options options) -> CInfo
-where
-    OracleBS Oracle;
-{
-    // assume monotone
-    // const auto& [lower, upper] = I;
-    const auto (mut lower, mut upper) = intvl;
+// #[allow(dead_code)]
+template <typename T, typename Oracle, typename Space>
+requires OracleBS<Oracle>
+auto besearch<Oracle>(Oracle& omega, std::pair<T, T>& intvl, const& Options options) -> CInfo {
+    auto& [lower, upper] = intvl;
     assert(lower <= upper);
     const auto u_orig = upper;
-    auto status = CutStatus::NoSoln;
 
-    auto niter = 0;
-    while (niter < options.max_iter) {
-        niter += 1;
+    for (auto niter : range(1, options.max_iter)) {
         const auto tau = (upper - lower) / 2.0;
         if (tau < options.tol) {
-            status = CutStatus::SmallEnough;
-            break;
+            return {upper != u_orig, niter, CutStatus::SmallEnough};
         }
-        auto t = lower; // l may be `i32` or `Fraction`
+        auto t = lower;  // l may be `i32` or `Fraction`
         t += tau;
         if (omega.assess_bs(t)) {
             // feasible sol'n obtained
@@ -284,7 +179,7 @@ where
             lower = t;
         }
     }
-    return {upper != u_orig, niter, status};
+    return {upper != u_orig, options.max_iter, CutStatus::NoSoln};
 };
 
 // /**

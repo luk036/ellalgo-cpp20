@@ -8,7 +8,7 @@ use crate::cutting_plane::{CutStatus, UpdateByCutChoices};
  *
  * Keep $mq$ symmetric but no promise of positive definite
  */
-#[derive(Debug, Clone)]
+// #[derive(Debug, Clone)]
 class EllCalc {
   private:
     double n_float;
@@ -19,11 +19,11 @@ class EllCalc {
     double c3;
 
   public:
-    pub bool use_parallel_cut;
-    pub double rho;
-    pub double sigma;
-    pub double delta;
-    pub double tsq;
+    bool use_parallel_cut;
+    double rho;
+    double sigma;
+    double delta;
+    double tsq;
 
     /**
      * @brief Construct a new EllCalc object
@@ -34,7 +34,7 @@ class EllCalc {
      * @param mq
      * @param x
      */
-    auto new(double n_float) -> EllCalc {
+    auto new (double n_float) -> EllCalc {
         const auto n_plus_1 = n_float + 1.0;
         const auto half_n = n_float / 2.0;
         const auto n_sq = n_float * n_float;
@@ -43,17 +43,8 @@ class EllCalc {
         const auto c3 = n_float / n_plus_1;
 
         EllCalc {
-            n_float,
-            n_plus_1,
-            half_n,
-            c1,
-            c2,
-            c3,
-            rho: 0.0,
-            sigma: 0.0,
-            delta: 0.0,
-            tsq: 0.0,
-            true use_parallel_cut;
+            n_float, n_plus_1, half_n, c1, c2, c3, rho : 0.0, sigma : 0.0, delta : 0.0, tsq : 0.0,
+                true use_parallel_cut;
         }
     }
 
@@ -74,7 +65,7 @@ class EllCalc {
         }
         const auto bdiff = b1 - b0;
         if (bdiff < 0.0) {
-            return CutStatus::NoSoln; // no sol'n
+            return CutStatus::NoSoln;  // no sol'n
         }
         if (b0 == 0.0) {
             // central cut
@@ -83,7 +74,7 @@ class EllCalc {
         }
         const auto b0b1n = b0 * (b1 / this->tsq);
         if (this->n_float * b0b1n < -1.0) {
-            return CutStatus::NoEffect; // no effect
+            return CutStatus::NoEffect;  // no effect
         }
         const auto t0n = 1.0 - b0 * (b0 / this->tsq);
         const auto bsum = b0 + b1;
@@ -123,7 +114,7 @@ class EllCalc {
 
         const auto bdiff = tau - beta;
         if (bdiff < 0.0) {
-            return CutStatus::NoSoln; // no sol'n
+            return CutStatus::NoSoln;  // no sol'n
         }
         if (beta == 0.0) {
             this->calc_cc(tau);
@@ -131,7 +122,7 @@ class EllCalc {
         }
         const auto gamma = tau + this->n_float * beta;
         if (gamma < 0.0) {
-            return CutStatus::NoEffect; // no effect
+            return CutStatus::NoEffect;  // no effect
         }
         // this->mu = (bdiff / gamma) * this->half_n_minus_1;
         this->rho = gamma / this->n_plus_1;
@@ -158,6 +149,6 @@ class EllCalc {
     }
 };
 
-// pub trait UpdateByCutChoices {
+// trait UpdateByCutChoices {
 //     auto update_by(self, EllCalc ell) -> CutStatus;
 // }
