@@ -1,7 +1,8 @@
 #pragma once
 
+#include <optional>            // for std::optional
 #include <xtensor/xarray.hpp>  // for ndarray
-#include <optional> // for std::optional
+
 #include "ell_calc.hpp"    // for EllCalc
 #include "ell_config.hpp"  // for CutStatus, SearchSpace, UpdateByCutChoices
 

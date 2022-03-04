@@ -1,7 +1,9 @@
 #pragma once
 
+#include <optional>  // for optional
+#include <utility>   // for pair
+
 #include "ell_config.hpp"
-#include <utility>  // for pair
 #include "py2cpp/range.hpp"
 
 /**
@@ -28,14 +30,14 @@
  * @return Information of Cutting-plane method
  */
 // #[allow(dead_code)]
-template <typename T, typename Oracle, typename Space>
-requires UpdateByCutChoices<T> && OracleFeas<Oracle> && SearchSpace<Space>
+template <typename Oracle, typename Space>
+requires OracleFeas<Oracle> && SearchSpace<Space, typename Oracle::CutChoices>
 auto cutting_plane_feas(Oracle& omega, Space& ss, const Options& options) -> CInfo {
     for (auto niter : py::range(1, options.max_iter)) {
         const auto cut = omega.assess_feas(ss.xc());  // query the oracle at &ss.xc()
         if (!cut) {
             // feasible sol'n obtained
-            const auto [cutstatus, tsq] = ss.update<T>(*cut);  // update ss
+            const auto [cutstatus, tsq] = ss.update(*cut);  // update ss
             if (cutstatus != CutStatus::Success) {
                 return {false, niter, cutstatus};
             }
@@ -63,20 +65,20 @@ auto cutting_plane_feas(Oracle& omega, Space& ss, const Options& options) -> CIn
  */
 // #[allow(dead_code)]
 template <typename T, typename Oracle, typename Space>
-requires UpdateByCutChoices<T> && OracleOptim<Oracle> && SearchSpace<Space>
+requires OracleOptim<Oracle> && SearchSpace<Space, typename Oracle::CutChoices>
 auto cutting_plane_optim(Oracle& omega, Space& ss, double& t, const Options& options)
-    -> (Option<Oracle::ArrayType>, size_t, CutStatus) {
-    auto x_best : Option<Oracle::ArrayType> = None;
+    -> std::tuple<std::optional<typename Oracle::ArrayType>, size_t, CutStatus> {
+    auto x_best = std::optional<typename Oracle::ArrayType>{};
     auto status = CutStatus::NoSoln;
 
     for (auto niter : py::range(1, options.max_iter)) {
         const auto [cut, shrunk] = omega.assess_optim(ss.xc(), t);  // query the oracle at &ss.xc()
         if (shrunk) {
             // best t obtained
-            x_best = Some(ss.xc());
+            x_best = ss.xc();  // ???
             status = CutStatus::Success;
         }
-        const auto [cutstatus, tsq] = ss.update<T>(cut);  // update ss
+        const auto [cutstatus, tsq] = ss.update(cut);  // update ss
         if (cutstatus != CutStatus::Success) {
             return {x_best, niter, cutstatus};
         }
@@ -112,33 +114,31 @@ auto cutting_plane_optim(Oracle& omega, Space& ss, double& t, const Options& opt
  * @return Information of Cutting-plane method
  */
 // #[allow(dead_code)]
-template <typename T, typename Oracle, typename Space>
-requires UpdateByCutChoices<T> && OracleQ<Oracle> && SearchSpace<Space>
+template <typename Oracle, typename Space>
+requires OracleQ<Oracle> && SearchSpace<Space, typename Oracle::CutChoices>
 auto cutting_plane_q(Oracle& omega, Space& ss, double& t, const Options& options)
-    -> (Option<Oracle::ArrayType>, size_t, CutStatus) {
-    auto x_best : Option<Oracle::ArrayType> = None;
+    -> std::tuple<std::optional<typename Oracle::ArrayType>, size_t, CutStatus> {
+    auto x_best = std::optional<typename Oracle::ArrayType>{};
     auto status = CutStatus::NoSoln;  // note!!!
     auto retry = false;
 
     for (auto niter : py::range(1, options.max_iter)) {
-        const auto(cut, shrunk, x0, more_alt)
+        const auto [cut, shrunk, x0, more_alt]
             = omega.assess_q(ss.xc(), t, retry);  // query the oracle at &ss.xc()
         if (shrunk) {
             // best t obtained
-            x_best = Some(x0);  // x0
+            x_best = x0;  // x0
         }
-        const auto [cutstatus, tsq] = ss.update<T>(cut);  // update ss
-        match& cutstatus {
-            CutStatus::NoEffect = > {
-                if (!more_alt) {
-                    // more alt?
-                    return {x_best, niter, status};
-                }
-                status = cutstatus;
-                retry = true;
+        const auto [cutstatus, tsq] = ss.update(cut);  // update ss
+        if (cutstatus == CutStatus::NoEffect) {
+            if (!more_alt) {
+                // more alt?
+                return {x_best, niter, status};
             }
-            CutStatus::NoSoln = > { return {x_best, niter, CutStatus::NoSoln}; }
-            _ = > {}
+            status = cutstatus;
+            retry = true;
+        } else if (cutstatus == CutStatus::NoSoln) {
+            return {x_best, niter, CutStatus::NoSoln};
         }
         if (tsq < options.tol) {
             return {x_best, niter, CutStatus::SmallEnough};
@@ -160,7 +160,7 @@ auto cutting_plane_q(Oracle& omega, Space& ss, double& t, const Options& options
 // #[allow(dead_code)]
 template <typename T, typename Oracle, typename Space>
 requires OracleBS<Oracle>
-auto besearch<Oracle>(Oracle& omega, std::pair<T, T>& intvl, const& Options options) -> CInfo {
+auto besearch(Oracle& omega, std::pair<T, T>& intvl, const Options& options) -> CInfo {
     auto& [lower, upper] = intvl;
     assert(lower <= upper);
     const auto u_orig = upper;
