@@ -64,7 +64,7 @@ auto cutting_plane_feas(Oracle& omega, Space& ss, const Options& options) -> CIn
  * @return Information of Cutting-plane method
  */
 // #[allow(dead_code)]
-template <typename T, typename Oracle, typename Space>
+template <typename Oracle, typename Space>
 requires OracleOptim<Oracle> && SearchSpace<Space, typename Oracle::CutChoices>
 auto cutting_plane_optim(Oracle& omega, Space& ss, double& t, const Options& options)
     -> std::tuple<std::optional<typename Oracle::ArrayType>, size_t, CutStatus> {
@@ -166,7 +166,7 @@ auto besearch(Oracle& omega, std::pair<T, T>& intvl, const Options& options) -> 
     const auto u_orig = upper;
 
     for (auto niter : py::range(1, options.max_iter)) {
-        const auto tau = (upper - lower) / 2.0;
+        const auto tau = (upper - lower) / 2; // T may be an integer
         if (tau < options.tol) {
             return {upper != u_orig, niter, CutStatus::SmallEnough};
         }

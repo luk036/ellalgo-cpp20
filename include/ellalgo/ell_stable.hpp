@@ -21,10 +21,10 @@ class EllStable {
     using Self = EllStable;
     using Parallel = std::pair<double, std::optional<double>>;
 
+    size_t n;
+    double kappa;
     Arr2 mq;
     Arr1 xc_;
-    double kappa;
-    size_t n;
     EllCalc helper;
 
   public:

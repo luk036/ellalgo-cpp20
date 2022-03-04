@@ -22,9 +22,9 @@ class Ell {
     using Parallel = std::pair<double, std::optional<double>>;
 
     size_t n;
+    double kappa;
     Arr2 mq;
     Arr1 xc_;
-    double kappa;
     EllCalc helper;
 
   public:
