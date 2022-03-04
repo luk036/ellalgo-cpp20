@@ -27,11 +27,10 @@
  * @param[in,out] omega perform assessment on x0
  * @param[in,out] ss    search Space containing x*
  * @param[in] options   maximum iteration and error tolerance etc.
- * @return Information of Cutting-plane method
+ * @return CInfo        Information of Cutting-plane method
  */
-// #[allow(dead_code)]
 template <typename Oracle, typename Space>
-requires OracleFeas<Oracle> && SearchSpace<Space, typename Oracle::CutChoices>
+requires OracleFeas<Oracle> && SearchSpace<Space, CutChoices<Oracle>>
 auto cutting_plane_feas(Oracle& omega, Space& ss, const Options& options) -> CInfo {
     for (auto niter : py::range(1, options.max_iter)) {
         const auto cut = omega.assess_feas(ss.xc());  // query the oracle at &ss.xc()
@@ -56,19 +55,17 @@ auto cutting_plane_feas(Oracle& omega, Space& ss, const Options& options) -> CIn
  *
  * @tparam Oracle
  * @tparam Space
- * @tparam opt_type
  * @param[in,out] omega perform assessment on x0
  * @param[in,out] ss    search Space containing x*
  * @param[in,out] t     best-so-far optimal sol'n
  * @param[in] options   maximum iteration and error tolerance etc.
  * @return Information of Cutting-plane method
  */
-// #[allow(dead_code)]
 template <typename Oracle, typename Space>
-requires OracleOptim<Oracle> && SearchSpace<Space, typename Oracle::CutChoices>
+requires OracleOptim<Oracle> && SearchSpace<Space, CutChoices<Oracle>>
 auto cutting_plane_optim(Oracle& omega, Space& ss, double& t, const Options& options)
-    -> std::tuple<std::optional<typename Oracle::ArrayType>, size_t, CutStatus> {
-    auto x_best = std::optional<typename Oracle::ArrayType>{};
+    -> std::tuple<std::optional<ArrayType<Oracle>>, size_t, CutStatus> {
+    auto x_best = std::optional<ArrayType<Oracle>>{};
     auto status = CutStatus::NoSoln;
 
     for (auto niter : py::range(1, options.max_iter)) {
@@ -115,10 +112,10 @@ auto cutting_plane_optim(Oracle& omega, Space& ss, double& t, const Options& opt
  */
 // #[allow(dead_code)]
 template <typename Oracle, typename Space>
-requires OracleQ<Oracle> && SearchSpace<Space, typename Oracle::CutChoices>
+requires OracleQ<Oracle> && SearchSpace<Space, CutChoices<Oracle>>
 auto cutting_plane_q(Oracle& omega, Space& ss, double& t, const Options& options)
-    -> std::tuple<std::optional<typename Oracle::ArrayType>, size_t, CutStatus> {
-    auto x_best = std::optional<typename Oracle::ArrayType>{};
+    -> std::tuple<std::optional<ArrayType<Oracle>>, size_t, CutStatus> {
+    auto x_best = std::optional<ArrayType<Oracle>>{};
     auto status = CutStatus::NoSoln;  // note!!!
     auto retry = false;
 
@@ -153,7 +150,7 @@ auto cutting_plane_q(Oracle& omega, Space& ss, double& t, const Options& options
  * @tparam Oracle
  * @tparam Space
  * @param[in,out] omega    perform assessment on x0
- * @param[in,out] I        interval containing x*
+ * @param[in,out] intvl    interval containing x*
  * @param[in]     options  maximum iteration and error tolerance etc.
  * @return CInfo
  */

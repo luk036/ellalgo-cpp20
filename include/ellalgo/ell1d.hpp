@@ -33,13 +33,11 @@ class Ell1D {
     auto set_xc(double xc) { this->xc_ = xc; }
 
     /**
-     * @brief Update ellipsoid core function using the cut
-     *
-     *  $grad^T * (x - xc) + beta <= 0$
-     *
-     * @tparam T
-     * @param[in] cut
-     * @return (i32, double)
+     * @brief Update ellipsoid using the single cut
+     * 
+     * @param[in] grad 
+     * @param[in] b0 
+     * @return std::pair<CutStatus, double> 
      */
     auto update_single(const double& grad, const double& b0) -> std::pair<CutStatus, double> {
         const auto g = grad;
@@ -76,6 +74,12 @@ class Ell1D {
      */
     auto xc() const -> double { return this->xc_; }
 
+    /**
+     * @brief 
+     * 
+     * @param[in] cut 
+     * @return std::pair<CutStatus, double> 
+     */
     auto update(const std::pair<ArrayType, double>& cut) -> std::pair<CutStatus, double> {
         const auto [grad, beta] = cut;
         return this->update_single(grad, beta);

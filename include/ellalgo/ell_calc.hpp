@@ -11,7 +11,6 @@
  *
  * Keep $mq$ symmetric but no promise of positive definite
  */
-// #[derive(Debug, Clone)]
 class EllCalc {
   private:
     double n_float;
@@ -30,13 +29,9 @@ class EllCalc {
     bool use_parallel_cut;
 
     /**
-     * @brief Construct a new EllCalc object
-     *
-     * @tparam V
-     * @tparam U
-     * @param kappa
-     * @param mq
-     * @param x
+     * @brief Construct a new Ell Calc object
+     * 
+     * @param n_float 
      */
     EllCalc(double n_float)
         : n_plus_1{n_float + 1.0},
@@ -51,14 +46,12 @@ class EllCalc {
           tsq{0.0},
           use_parallel_cut{true} {}
 
-    // auto update_cut(double) -> CutStatus { this->calc_dc(beta beta) }
-
     /**
-     * @brief
-     *
+     * @brief 
+     * 
      * @param[in] b0
      * @param[in] b1
-     * @return i32
+     * @return CutStatus 
      */
     auto calc_ll_core(double b0, double b1) -> CutStatus;
 
@@ -67,7 +60,6 @@ class EllCalc {
      *
      * @param[in] b1
      * @param[in] b1sq
-     * @return void
      */
     auto calc_ll_cc(double b1, double b1sqn) -> void;
 
@@ -75,7 +67,7 @@ class EllCalc {
      * @brief Deep Cut
      *
      * @param[in] beta
-     * @return i32
+     * @return CutStatus 
      */
     auto calc_dc(double beta) -> CutStatus;
 
@@ -83,14 +75,13 @@ class EllCalc {
      * @brief Central Cut
      *
      * @param[in] tau
-     * @return i32
      */
     auto calc_cc(double tau) -> void;
 
     /**
      * @brief Get the results object
-     *
-     * @return std::array<double, 4>
+     * 
+     * @return std::array<double, 4> 
      */
     auto get_results() const -> std::array<double, 4> {
         return {this->rho, this->sigma, this->delta, this->tsq};

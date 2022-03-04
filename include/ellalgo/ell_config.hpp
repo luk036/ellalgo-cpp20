@@ -5,11 +5,19 @@
 #include <optional>  // for optional
 #include <utility>   // for pair
 
+/**
+ * @brief Options
+ * 
+ */
 struct Options {
     size_t max_iter;
     double tol;
 };
 
+/**
+ * @brief Cut Status
+ * 
+ */
 enum CutStatus {
     Success,
     NoSoln,
@@ -37,7 +45,11 @@ template <typename T> using RetQ = std::tuple<Cut<T>, bool, ArrayType<T>, bool>;
 //     auto update_by(SS & ss, const Self::ArrayType& grad)->std::pair<CutStatus, double>;
 // };
 
-/// Oracle for feasibility problems
+/**
+ * @brief Oracle for feasibility problems (assume convexity)
+ * 
+ * @tparam Oracle 
+ */
 template <class Oracle>
 concept OracleFeas = requires(Oracle omega, const ArrayType<Oracle>& x) {
     typename Oracle::ArrayType;   // double for 1D; ndarray::Arr1 for general
@@ -45,7 +57,11 @@ concept OracleFeas = requires(Oracle omega, const ArrayType<Oracle>& x) {
     { omega.assess_feas(x) } -> std::convertible_to<std::optional<Cut<Oracle>>>;
 };
 
-/// Oracle for optimization problems
+/**
+ * @brief Oracle for optimization problems (assume convexity)
+ * 
+ * @tparam Oracle 
+ */
 template <class Oracle>
 concept OracleOptim = requires(Oracle omega, const ArrayType<Oracle>& x, double& t) {
     typename Oracle::ArrayType;   // double for 1D; ndarray::Arr1 for general
@@ -53,7 +69,11 @@ concept OracleOptim = requires(Oracle omega, const ArrayType<Oracle>& x, double&
     { omega.assess_optim(x, t) } -> std::convertible_to<std::pair<Cut<Oracle>, bool>>;
 };
 
-/// Oracle for quantized optimization problems
+/**
+ * @brief Oracle for quantized optimization problems (assume convexity)
+ * 
+ * @tparam Oracle 
+ */
 template <class Oracle>
 concept OracleQ = requires(Oracle omega, const ArrayType<Oracle>& x, double& t, bool retry) {
     typename Oracle::ArrayType;   // double for 1D; ndarray::Arr1 for general
@@ -61,12 +81,22 @@ concept OracleQ = requires(Oracle omega, const ArrayType<Oracle>& x, double& t, 
     { omega.assess_q(x, t, retry) } -> std::convertible_to<RetQ<Oracle>>;
 };
 
-/// Oracle for binary search
+/**
+ * @brief Oracle for binary search (assume monotonicity)
+ * 
+ * @tparam Oracle 
+ */
 template <class Oracle>
 concept OracleBS = requires(Oracle omega, double& t) {
     { omega.assess_bs(t) } -> std::convertible_to<bool>;
 };
 
+/**
+ * @brief Search space
+ * 
+ * @tparam Space 
+ * @tparam T 
+ */
 template <class Space, typename T>
 concept SearchSpace = requires(Space ss, const std::pair<ArrayType<Space>, T>& cut) {
     typename Space::ArrayType;  // double for 1D; ndarray::Arr1 for general
