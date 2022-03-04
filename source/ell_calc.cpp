@@ -1,6 +1,7 @@
 #include <array>
 #include <cmath>  // for std::sqrt()
 #include <ellalgo/cutting_plane.hpp>
+#include <ellalgo/ell1d.hpp>
 #include <ellalgo/ell_calc.hpp>
 
 /**
