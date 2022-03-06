@@ -163,7 +163,7 @@ auto besearch(Oracle& omega, std::pair<T, T>& intvl, const Options& options) -> 
     const auto u_orig = upper;
 
     for (auto niter : py::range(1, options.max_iter)) {
-        const auto tau = (upper - lower) / 2; // T may be an integer
+        const auto tau = (upper - lower) / 2;  // T may be an integer
         if (tau < options.tol) {
             return {upper != u_orig, niter, CutStatus::SmallEnough};
         }

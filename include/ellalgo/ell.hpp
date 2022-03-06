@@ -33,44 +33,44 @@ class Ell {
 
     /**
      * @brief Construct a new Ell Stable object
-     * 
-     * @param[in] kappa 
-     * @param[in] mq 
-     * @param[in] xc 
+     *
+     * @param[in] kappa
+     * @param[in] mq
+     * @param[in] xc
      */
     Ell(double kappa, Arr2 mq, Arr1 xc);
 
     /**
      * @brief Construct a new Ell Stable object
-     * 
-     * @param[in] val 
-     * @param[in] xc 
+     *
+     * @param[in] val
+     * @param[in] xc
      */
     Ell(Arr1 val, Arr1 xc);
 
     /**
      * @brief Construct a new Ell Stable object
-     * 
-     * @param[in] alpha 
-     * @param[in] xc 
+     *
+     * @param[in] alpha
+     * @param[in] xc
      */
     Ell(double alpha, Arr1 xc);
 
     /**
-     * @brief 
-     * 
-     * @param[in] grad 
-     * @param[in] beta 
-     * @return std::pair<CutStatus, double> 
+     * @brief
+     *
+     * @param[in] grad
+     * @param[in] beta
+     * @return std::pair<CutStatus, double>
      */
     auto update_single(const Arr1& grad, const double& beta) -> std::pair<CutStatus, double>;
 
     /**
-     * @brief 
-     * 
-     * @param[in] grad 
-     * @param[in] beta 
-     * @return std::pair<CutStatus, double> 
+     * @brief
+     *
+     * @param[in] grad
+     * @param[in] beta
+     * @return std::pair<CutStatus, double>
      */
     auto update_parallel(const Arr1& grad, const Parallel& beta) -> std::pair<CutStatus, double>;
 
@@ -82,11 +82,11 @@ class Ell {
     auto xc() const -> Self::ArrayType { return this->xc_; }
 
     /**
-     * @brief 
-     * 
-     * @tparam T 
-     * @param[in] cut 
-     * @return std::pair<CutStatus, double> 
+     * @brief
+     *
+     * @tparam T
+     * @param[in] cut
+     * @return std::pair<CutStatus, double>
      */
     template <typename T> auto update(const std::pair<Self::ArrayType, T>& cut)
         -> std::pair<CutStatus, double> {

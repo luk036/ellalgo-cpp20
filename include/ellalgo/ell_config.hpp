@@ -7,7 +7,7 @@
 
 /**
  * @brief Options
- * 
+ *
  */
 struct Options {
     size_t max_iter;
@@ -16,7 +16,7 @@ struct Options {
 
 /**
  * @brief Cut Status
- * 
+ *
  */
 enum CutStatus {
     Success,
@@ -47,8 +47,8 @@ template <typename T> using RetQ = std::tuple<Cut<T>, bool, ArrayType<T>, bool>;
 
 /**
  * @brief Oracle for feasibility problems (assume convexity)
- * 
- * @tparam Oracle 
+ *
+ * @tparam Oracle
  */
 template <class Oracle>
 concept OracleFeas = requires(Oracle omega, const ArrayType<Oracle>& x) {
@@ -59,8 +59,8 @@ concept OracleFeas = requires(Oracle omega, const ArrayType<Oracle>& x) {
 
 /**
  * @brief Oracle for optimization problems (assume convexity)
- * 
- * @tparam Oracle 
+ *
+ * @tparam Oracle
  */
 template <class Oracle>
 concept OracleOptim = requires(Oracle omega, const ArrayType<Oracle>& x, double& t) {
@@ -71,8 +71,8 @@ concept OracleOptim = requires(Oracle omega, const ArrayType<Oracle>& x, double&
 
 /**
  * @brief Oracle for quantized optimization problems (assume convexity)
- * 
- * @tparam Oracle 
+ *
+ * @tparam Oracle
  */
 template <class Oracle>
 concept OracleQ = requires(Oracle omega, const ArrayType<Oracle>& x, double& t, bool retry) {
@@ -83,8 +83,8 @@ concept OracleQ = requires(Oracle omega, const ArrayType<Oracle>& x, double& t, 
 
 /**
  * @brief Oracle for binary search (assume monotonicity)
- * 
- * @tparam Oracle 
+ *
+ * @tparam Oracle
  */
 template <class Oracle>
 concept OracleBS = requires(Oracle omega, double& t) {
@@ -93,9 +93,9 @@ concept OracleBS = requires(Oracle omega, double& t) {
 
 /**
  * @brief Search space
- * 
- * @tparam Space 
- * @tparam T 
+ *
+ * @tparam Space
+ * @tparam T
  */
 template <class Space, typename T>
 concept SearchSpace = requires(Space ss, const std::pair<ArrayType<Space>, T>& cut) {

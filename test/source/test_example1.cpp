@@ -53,7 +53,7 @@ TEST_CASE("Example 1, test feasible") {
     auto ell = Ell(Arr1{10.0, 10.0}, Arr1{0.0, 0.0});
     auto oracle = MyOracle{};
     auto t = -1.0e100;  // std::numeric_limits<double>::min()
-    const auto options = Options{ 2000, 1e-10 };
+    const auto options = Options{2000, 1e-10};
     const auto [x_opt, _niter, _status] = cutting_plane_optim(oracle, ell, t, options);
     static_assert(sizeof _niter >= 0, "make compiler happy");
     static_assert(sizeof _status >= 0, "make compiler happy");

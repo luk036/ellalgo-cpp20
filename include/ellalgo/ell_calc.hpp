@@ -30,8 +30,8 @@ class EllCalc {
 
     /**
      * @brief Construct a new Ell Calc object
-     * 
-     * @param n_float 
+     *
+     * @param n_float
      */
     EllCalc(double n_float)
         : n_plus_1{n_float + 1.0},
@@ -47,11 +47,11 @@ class EllCalc {
           use_parallel_cut{true} {}
 
     /**
-     * @brief 
-     * 
+     * @brief
+     *
      * @param[in] b0
      * @param[in] b1
-     * @return CutStatus 
+     * @return CutStatus
      */
     auto calc_ll_core(double b0, double b1) -> CutStatus;
 
@@ -67,7 +67,7 @@ class EllCalc {
      * @brief Deep Cut
      *
      * @param[in] beta
-     * @return CutStatus 
+     * @return CutStatus
      */
     auto calc_dc(double beta) -> CutStatus;
 
@@ -80,8 +80,8 @@ class EllCalc {
 
     /**
      * @brief Get the results object
-     * 
-     * @return std::array<double, 4> 
+     *
+     * @return std::array<double, 4>
      */
     auto get_results() const -> std::array<double, 4> {
         return {this->rho, this->sigma, this->delta, this->tsq};

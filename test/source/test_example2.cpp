@@ -44,7 +44,7 @@ struct MyOracle {
 TEST_CASE("Example 2, test feasible") {
     auto ell = Ell(Arr1{10.0, 10.0}, Arr1{0.0, 0.0});
     auto oracle = MyOracle{};
-    const auto options = Options{ 2000, 1e-12 };
+    const auto options = Options{2000, 1e-12};
     const auto [feasible, _niter, _status] = cutting_plane_feas(oracle, ell, options);
     static_assert(sizeof _niter >= 0, "make compiler happy");
     static_assert(sizeof _status >= 0, "make compiler happy");
