@@ -155,9 +155,9 @@ auto cutting_plane_q(Oracle& omega, Space& ss, double& t, const Options& options
  * @return CInfo
  */
 // #[allow(dead_code)]
-template <typename T, typename Oracle, typename Space>
+template <typename T, typename Oracle>
 requires OracleBS<Oracle>
-auto besearch(Oracle& omega, std::pair<T, T>& intvl, const Options& options) -> CInfo {
+auto bsearch(Oracle& omega, std::pair<T, T>& intvl, const Options& options) -> CInfo {
     auto& [lower, upper] = intvl;
     assert(lower <= upper);
     const auto u_orig = upper;
