@@ -57,7 +57,7 @@ TEST_CASE("Example 1, test feasible") {
     const auto [x_opt, _niter, _status] = cutting_plane_optim(oracle, ell, t, options);
     static_assert(sizeof _niter >= 0, "make compiler happy");
     static_assert(sizeof _status >= 0, "make compiler happy");
-    CHECK(x_opt);
+    REQUIRE(!!x_opt);
     const auto x = *x_opt;
     CHECK(x[0] >= 0.0);
 }

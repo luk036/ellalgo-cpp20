@@ -1,5 +1,5 @@
-# Distributed under the OSI-approved BSD 3-Clause License.  See accompanying
-# file Copyright.txt or https://cmake.org/licensing for details.
+# Distributed under the OSI-approved BSD 3-Clause License.  See accompanying file Copyright.txt or
+# https://cmake.org/licensing for details.
 
 set(prefix "${TEST_PREFIX}")
 set(suffix "${TEST_SUFFIX}")
@@ -23,13 +23,13 @@ function(add_command NAME)
   endforeach()
   set(script
       "${script}${NAME}(${_args})\n"
-      PARENT_SCOPE)
+      PARENT_SCOPE
+  )
 endfunction()
 
 # Run test executable to get list of available tests
 if(NOT EXISTS "${TEST_EXECUTABLE}")
-  message(
-    FATAL_ERROR "Specified test executable '${TEST_EXECUTABLE}' does not exist")
+  message(FATAL_ERROR "Specified test executable '${TEST_EXECUTABLE}' does not exist")
 endif()
 
 if("${spec}" MATCHES .)
@@ -39,20 +39,22 @@ endif()
 execute_process(
   COMMAND ${TEST_EXECUTOR} "${TEST_EXECUTABLE}" ${spec} --list-test-cases
   OUTPUT_VARIABLE output
-  RESULT_VARIABLE result)
+  RESULT_VARIABLE result
+)
 if(NOT ${result} EQUAL 0)
   message(FATAL_ERROR "Error running test executable '${TEST_EXECUTABLE}':\n"
-                      "  Result: ${result}\n" "  Output: ${output}\n")
+                      "  Result: ${result}\n" "  Output: ${output}\n"
+  )
 endif()
 
 string(REPLACE "\n" ";" output "${output}")
 
 # Parse output
 foreach(line ${output})
-  if("${line}"
-     STREQUAL
+  if("${line}" STREQUAL
      "==============================================================================="
-     OR "${line}" MATCHES [==[^\[doctest\] ]==])
+     OR "${line}" MATCHES [==[^\[doctest\] ]==]
+  )
     continue()
   endif()
   set(test ${line})
@@ -60,22 +62,22 @@ foreach(line ${output})
   if(${add_labels} EQUAL 1)
     # get test suite that test belongs to
     execute_process(
-      COMMAND ${TEST_EXECUTOR} "${TEST_EXECUTABLE}" --test-case=${test}
-              --list-test-suites
+      COMMAND ${TEST_EXECUTOR} "${TEST_EXECUTABLE}" --test-case=${test} --list-test-suites
       OUTPUT_VARIABLE labeloutput
-      RESULT_VARIABLE labelresult)
+      RESULT_VARIABLE labelresult
+    )
     if(NOT ${labelresult} EQUAL 0)
-      message(
-        FATAL_ERROR "Error running test executable '${TEST_EXECUTABLE}':\n"
-                    "  Result: ${labelresult}\n" "  Output: ${labeloutput}\n")
+      message(FATAL_ERROR "Error running test executable '${TEST_EXECUTABLE}':\n"
+                          "  Result: ${labelresult}\n" "  Output: ${labeloutput}\n"
+      )
     endif()
 
     string(REPLACE "\n" ";" labeloutput "${labeloutput}")
     foreach(labelline ${labeloutput})
-      if("${labelline}"
-         STREQUAL
+      if("${labelline}" STREQUAL
          "==============================================================================="
-         OR "${labelline}" MATCHES [==[^\[doctest\] ]==])
+         OR "${labelline}" MATCHES [==[^\[doctest\] ]==]
+      )
         continue()
       endif()
       list(APPEND labels ${labelline})
@@ -83,12 +85,11 @@ foreach(line ${output})
   endif()
 
   if(NOT "${junit_output_dir}" STREQUAL "")
-    # turn testname into a valid filename by replacing all special characters
-    # with "-"
+    # turn testname into a valid filename by replacing all special characters with "-"
     string(REGEX REPLACE "[/\\:\"|<>]" "-" test_filename "${test}")
-    set(TEST_JUNIT_OUTPUT_PARAM
-        "--reporters=junit"
-        "--out=${junit_output_dir}/${prefix}${test_filename}${suffix}.xml")
+    set(TEST_JUNIT_OUTPUT_PARAM "--reporters=junit"
+                                "--out=${junit_output_dir}/${prefix}${test_filename}${suffix}.xml"
+    )
   else()
     unset(TEST_JUNIT_OUTPUT_PARAM)
   endif()
@@ -102,7 +103,8 @@ foreach(line ${output})
     "${TEST_EXECUTABLE}"
     "--test-case=${test_name}"
     "${TEST_JUNIT_OUTPUT_PARAM}"
-    ${extra_args})
+    ${extra_args}
+  )
   add_command(
     set_tests_properties
     "${prefix}${test}${suffix}"
@@ -111,13 +113,13 @@ foreach(line ${output})
     "${TEST_WORKING_DIR}"
     LABELS
     ${labels}
-    ${properties})
+    ${properties}
+  )
   unset(labels)
   list(APPEND tests "${prefix}${test}${suffix}")
 endforeach()
 
-# Create a list of all discovered tests, which users may use to e.g. set
-# properties on the tests
+# Create a list of all discovered tests, which users may use to e.g. set properties on the tests
 add_command(set ${TEST_LIST} ${tests})
 
 # Write CTest script
