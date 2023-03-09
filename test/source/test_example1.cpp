@@ -54,12 +54,11 @@ TEST_CASE("Example 1, test feasible") {
   auto oracle = MyOracle{};
   auto t = -1.0e100; // std::numeric_limits<double>::min()
   const auto options = Options{2000, 1e-10};
-  const auto [x_opt, _niter, _status] =
+  const auto [x, _niter, _status] =
       cutting_plane_optim(oracle, ell, t, options);
   static_assert(sizeof _niter >= 0, "make compiler happy");
   static_assert(sizeof _status >= 0, "make compiler happy");
-  REQUIRE(!!x_opt);
-  const auto x = *x_opt;
+  REQUIRE(x != Arr1{});
   CHECK(x[0] >= 0.0);
 }
 
@@ -70,10 +69,9 @@ TEST_CASE("Example 1, test infeasible1") {
   auto oracle = MyOracle{};
   auto t = -1.0e100; // std::numeric_limits<double>::min()
   const auto options = Options{2000, 1e-12};
-  const auto [x_opt, _niter, status] =
-      cutting_plane_optim(oracle, ell, t, options);
+  const auto [x, _niter, status] = cutting_plane_optim(oracle, ell, t, options);
   static_assert(sizeof _niter >= 0, "make compiler happy");
-  CHECK(!x_opt);
+  CHECK_EQ(x, Arr1{});
   CHECK(status == CutStatus::NoSoln); // no sol'n
 }
 
@@ -83,9 +81,8 @@ TEST_CASE("Example 1, test infeasible22") {
   auto t = 100.0;
   // wrong initial guess
   const auto options = Options{2000, 1e-12};
-  const auto [x_opt, _niter, status] =
-      cutting_plane_optim(oracle, ell, t, options);
+  const auto [x, _niter, status] = cutting_plane_optim(oracle, ell, t, options);
   static_assert(sizeof _niter >= 0, "make compiler happy");
-  CHECK(!x_opt);
+  CHECK_EQ(x, Arr1{});
   CHECK(status == CutStatus::NoSoln); // no sol'n
 }
