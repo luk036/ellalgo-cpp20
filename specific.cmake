@@ -17,5 +17,7 @@ if(xtensor_ADDED)
   include_directories(${xtensor_SOURCE_DIR}/include)
 endif(xtensor_ADDED)
 
-set(SPECIFIC_LIBS fmt::fmt)
+CPMAddPackage("gh:ericniebler/range-v3#0.10.0")
+
+set(SPECIFIC_LIBS fmt::fmt range-v3)
 # remember to turn off the warnings
