@@ -31,12 +31,13 @@ public:
   /**
    * @brief Construct a new Ell Calc object
    *
-   * @param n_float
+   * @param ndim
    */
-  EllCalc(double n_float)
-      : n_plus_1{n_float + 1.0}, half_n{n_float / 2.0}, n_sq{n_float * n_float},
-        c1{n_sq / (n_sq - 1.0)}, c2{2.0 / n_plus_1}, c3{n_float / n_plus_1},
-        rho{0.0}, sigma{0.0}, delta{0.0}, tsq{0.0}, use_parallel_cut{true} {}
+  EllCalc(double ndim)
+      : n_float(ndim), n_plus_1{n_float + 1.0}, half_n{n_float / 2.0},
+        n_sq{n_float * n_float}, c1{n_sq / (n_sq - 1.0)}, c2{2.0 / n_plus_1},
+        c3{n_float / n_plus_1}, rho{0.0}, sigma{0.0}, delta{0.0}, tsq{0.0},
+        use_parallel_cut{true} {}
 
   /**
    * @brief

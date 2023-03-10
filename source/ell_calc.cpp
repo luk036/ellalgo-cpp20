@@ -14,7 +14,7 @@
 auto EllCalc::calc_ll_core(double b0, double b1) -> CutStatus {
   const auto b1sqn = b1 * (b1 / this->tsq);
   const auto t1n = 1.0 - b1sqn;
-  if (t1n < 0.0 || !this->use_parallel_cut) {
+  if (t1n <= 0.0 || !this->use_parallel_cut) {
     return this->calc_dc(b0);
   }
   const auto bdiff = b1 - b0;
@@ -36,7 +36,7 @@ auto EllCalc::calc_ll_core(double b0, double b1) -> CutStatus {
   const auto bav = bsum / 2.0;
   const auto tempn = this->half_n * bsumn * bdiff;
   const auto xi = std::sqrt(t0n * t1n + tempn * tempn);
-  this->sigma = this->c3 + (1.0 - b0b1n - xi) / (bsumn * bav) / this->n_plus_1;
+  this->sigma = this->c3 + (1.0 + b0b1n - xi) / (bsumn * bav) / this->n_plus_1;
   this->rho = this->sigma * bav;
   this->delta = this->c1 * ((t0n + t1n) / 2.0 + xi / this->n_float);
   return CutStatus::Success;

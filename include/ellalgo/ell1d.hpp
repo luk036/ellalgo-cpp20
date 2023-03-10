@@ -30,7 +30,7 @@ public:
    *
    * @param[in] xc
    */
-  auto set_xc(double xc) { this->xc_ = xc; }
+  auto set_xc(double xc) -> void { this->xc_ = xc; }
 
   /**
    * @brief Update ellipsoid using the single cut
@@ -83,7 +83,8 @@ public:
    */
   auto update(const std::pair<ArrayType, double> &cut)
       -> std::pair<CutStatus, double> {
-    const auto [grad, beta] = cut;
+    const auto &grad = cut.first;
+    const auto &beta = cut.second;
     return this->update_single(grad, beta);
   }
 };

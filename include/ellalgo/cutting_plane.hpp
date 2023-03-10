@@ -4,6 +4,7 @@
 #include <utility> // for pair
 
 #include "ell_config.hpp"
+#include <tuple>
 
 /**
  * @brief Find a point in a convex set (defined through a cutting-plane oracle).
@@ -30,15 +31,17 @@
  */
 template <typename Oracle, typename Space>
 #if __cpp_concepts >= 201907L
-  requires(OracleFeas<Oracle> && SearchSpace<Space, CutChoices<Oracle>>)
+requires(OracleFeas<Oracle> &&SearchSpace<Space, CutChoices<Oracle>>)
 #endif
-auto cutting_plane_feas(Oracle &omega, Space &ss, const Options &options)
-    -> CInfo {
+    auto cutting_plane_feas(Oracle &omega, Space &ss, const Options &options)
+        -> CInfo {
   for (auto niter = 0U; niter < options.max_iter; ++niter) {
     const auto cut = omega.assess_feas(ss.xc()); // query the oracle at &ss.xc()
     if (!cut) {
       // feasible sol'n obtained
-      const auto [cutstatus, tsq] = ss.update(*cut); // update ss
+      const auto result = ss.update(*cut); // update ss
+      const auto cutstatus = result.first;
+      const auto tsq = result.second;
       if (cutstatus != CutStatus::Success) {
         return {false, niter, cutstatus};
       }
@@ -65,31 +68,35 @@ auto cutting_plane_feas(Oracle &omega, Space &ss, const Options &options)
  */
 template <typename Oracle, typename Space>
 #if __cpp_concepts >= 201907L
-  requires(OracleOptim<Oracle> && SearchSpace<Space, CutChoices<Oracle>>)
+requires(OracleOptim<Oracle> &&SearchSpace<Space, CutChoices<Oracle>>)
 #endif
-auto cutting_plane_optim(Oracle &omega, Space &ss, double &t,
-                         const Options &options)
-    -> std::tuple<ArrayType<Oracle>, size_t, CutStatus> {
-  auto x_best = ArrayType<Oracle>{};
+    auto cutting_plane_optim(Oracle &omega, Space &ss, double &t,
+                             const Options &options)
+        -> std::tuple<ArrayType<Oracle>, size_t, CutStatus> {
+  ArrayType<Oracle> x_best{};
   auto status = CutStatus::NoSoln;
 
   for (auto niter = 0U; niter < options.max_iter; ++niter) {
-    const auto [cut, shrunk] =
+    const auto assess =
         omega.assess_optim(ss.xc(), t); // query the oracle at &ss.xc()
+    const auto cut = assess.first;
+    const auto shrunk = assess.second;
     if (shrunk) {
       // best t obtained
-      x_best = ss.xc(); // ???
+      x_best = ss.xc(); // TODO
       status = CutStatus::Success;
     }
-    const auto [cutstatus, tsq] = ss.update(cut); // update ss
+    const auto result = ss.update(cut); // update ss
+    const auto cutstatus = result.first;
+    const auto tsq = result.second;
     if (cutstatus != CutStatus::Success) {
-      return {x_best, niter, cutstatus};
+      return std::make_tuple(std::move(x_best), niter, cutstatus);
     }
     if (tsq < options.tol) {
-      return {x_best, niter, CutStatus::SmallEnough};
+      return std::make_tuple(std::move(x_best), niter, CutStatus::SmallEnough);
     }
   }
-  return {x_best, options.max_iter, status};
+  return std::make_tuple(std::move(x_best), options.max_iter, status);
 } // END
 
 /**
@@ -119,38 +126,44 @@ auto cutting_plane_optim(Oracle &omega, Space &ss, double &t,
 // #[allow(dead_code)]
 template <typename Oracle, typename Space>
 #if __cpp_concepts >= 201907L
-  requires(OracleQ<Oracle> && SearchSpace<Space, CutChoices<Oracle>>)
+requires(OracleQ<Oracle> &&SearchSpace<Space, CutChoices<Oracle>>)
 #endif
-auto cutting_plane_q(Oracle &omega, Space &ss, double &t,
-                     const Options &options)
-    -> std::tuple<ArrayType<Oracle>, size_t, CutStatus> {
+    auto cutting_plane_q(Oracle &omega, Space &ss, double &t,
+                         const Options &options)
+        -> std::tuple<ArrayType<Oracle>, size_t, CutStatus> {
   auto x_best = ArrayType<Oracle>{};
   auto status = CutStatus::NoSoln; // note!!!
   auto retry = false;
 
   for (auto niter = 0U; niter < options.max_iter; ++niter) {
-    const auto [cut, shrunk, x0, more_alt] =
+    const auto assess =
         omega.assess_q(ss.xc(), t, retry); // query the oracle at &ss.xc()
+    const auto &cut = std::get<0>(assess);
+    const auto shrunk = std::get<1>(assess);
+    const auto &x0 = std::get<2>(assess);
+    const auto more_alt = std::get<3>(assess);
     if (shrunk) {
       // best t obtained
       x_best = x0; // x0
     }
-    const auto [cutstatus, tsq] = ss.update(cut); // update ss
+    const auto result = ss.update(cut); // update ss
+    const auto cutstatus = result.first;
+    const auto tsq = result.second;
     if (cutstatus == CutStatus::NoEffect) {
       if (!more_alt) {
         // more alt?
-        return {x_best, niter, status};
+        return {std::move(x_best), niter, status};
       }
       status = cutstatus;
       retry = true;
     } else if (cutstatus == CutStatus::NoSoln) {
-      return {x_best, niter, CutStatus::NoSoln};
+      return {std::move(x_best), niter, CutStatus::NoSoln};
     }
     if (tsq < options.tol) {
-      return {x_best, niter, CutStatus::SmallEnough};
+      return {std::move(x_best), niter, CutStatus::SmallEnough};
     }
   }
-  return {x_best, options.max_iter, status};
+  return {std::move(x_best), options.max_iter, status};
 } // END
 
 /**
@@ -166,11 +179,12 @@ auto cutting_plane_q(Oracle &omega, Space &ss, double &t,
 // #[allow(dead_code)]
 template <typename T, typename Oracle>
 #if __cpp_concepts >= 201907L
-  requires OracleBS<Oracle>
+requires OracleBS<Oracle>
 #endif
 auto bsearch(Oracle &omega, std::pair<T, T> &intvl, const Options &options)
     -> CInfo {
-  auto &[lower, upper] = intvl;
+  auto &lower = intvl.first;
+  auto &upper = intvl.second;
   assert(lower <= upper);
   const auto u_orig = upper;
 
@@ -189,7 +203,7 @@ auto bsearch(Oracle &omega, std::pair<T, T> &intvl, const Options &options)
     }
   }
   return {upper != u_orig, options.max_iter, CutStatus::NoSoln};
-};
+}
 
 // /**
 //  * @brief

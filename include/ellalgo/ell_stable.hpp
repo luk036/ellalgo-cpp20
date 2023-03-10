@@ -18,7 +18,7 @@ using Arr2 = xt::xarray<double, xt::layout_type::row_major>;
  */
 class EllStable {
   using Self = EllStable;
-  using Parallel = std::pair<double, std::optional<double>>;
+  using Parallel = std::pair<double, double>;
 
   size_t n;
   double kappa;
@@ -91,16 +91,48 @@ public:
    * @return std::pair<CutStatus, double>
    */
   template <typename T>
-  auto update(const std::pair<Self::ArrayType, T> &cut)
-      -> std::pair<CutStatus, double> {
-    const auto [grad, beta] = cut;
-    if constexpr (std::is_same_v<T, double>) {
-      return this->update_single(grad, beta);
-    } else if constexpr (std::is_same_v<T, Parallel>) {
-      return this->update_parallel(grad, beta);
-    } else {
-      // static_assert(false, "Not supported type");
-      return {CutStatus::NoSoln, 0.0};
-    }
+  auto update(const std::pair<Self::ArrayType, T> &cut) ->
+      typename std::enable_if<std::is_same<T, double>::value,
+                              std::pair<CutStatus, double>>::type {
+    const auto &grad = cut.first;
+    const auto &beta = cut.second;
+    return this->update_single(grad, beta);
   }
+
+  /**
+   * @brief
+   *
+   * @tparam T
+   * @param[in] cut
+   * @return std::pair<CutStatus, double>
+   */
+  template <typename T>
+  auto update(const std::pair<Self::ArrayType, T> &cut) ->
+      typename std::enable_if<std::is_same<T, Parallel>::value,
+                              std::pair<CutStatus, double>>::type {
+    const auto &grad = cut.first;
+    const auto &beta = cut.second;
+    return this->update_parallel(grad, beta);
+  }
+
+  // /**
+  //  * @brief
+  //  *
+  //  * @tparam T
+  //  * @param[in] cut
+  //  * @return std::pair<CutStatus, double>
+  //  */
+  // template <typename T>
+  // auto update(const std::pair<Self::ArrayType, T> &cut)
+  //     -> std::pair<CutStatus, double> {
+  //   const auto [grad, beta] = cut;
+  //   if constexpr (std::is_same_v<T, double>) {
+  //     return this->update_single(grad, beta);
+  //   } else if constexpr (std::is_same_v<T, Parallel>) {
+  //     return this->update_parallel(grad, beta);
+  //   } else {
+  //     // static_assert(false, "Not supported type");
+  //     return {CutStatus::NoSoln, 0.0};
+  //   }
+  // }
 };

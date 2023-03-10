@@ -5,7 +5,7 @@ add_requires("xtensor", {alias = "xtensor"})
 add_requires("range-v3", {alias = "range-v3"})
 -- add_requires("conan::range-v3/0.11.0", {alias = "range-v3"})
 
-set_languages("c++17")
+set_languages("c++14")
 
 if is_plat("linux") then
     set_warnings("all", "error")
@@ -29,7 +29,7 @@ target("test_ellalgo")
     set_kind("binary")
     add_deps("EllAlgo")
     add_includedirs("include", {public = true})
-    add_files("test//source/*.cpp")
+    add_files("test/source/*.cpp")
     add_packages("fmt", "doctest", "xtensor", "range-v3")
 
 --

@@ -1,8 +1,7 @@
-#include <doctest/doctest.h> // for ResultBuilder, TestCase, CHECK
+#include <doctest/doctest.h> // for ResultBuilder, TestCase, CHECK_EQ
 
 #include <ellalgo/cutting_plane.hpp>   // for cutting_plane_optim
 #include <ellalgo/ell.hpp>             // for ell
-#include <tuple>                       // for get, tuple
 #include <xtensor/xaccessible.hpp>     // for xconst_accessible
 #include <xtensor/xarray.hpp>          // for xarray_container
 #include <xtensor/xlayout.hpp>         // for layout_type, layout_type::row...
@@ -22,7 +21,7 @@ struct MyOracle {
    *
    * @param[in] z
    * @param[in,out] t
-   * @return std::tuple<Cut, double>
+   * @return std::pair<Cut, double>
    */
   auto assess_optim(const Arr1 &z, double &t) -> std::pair<Cut, bool> {
     const auto x = z[0];
@@ -54,18 +53,10 @@ TEST_CASE("Example 1, test feasible") {
   auto oracle = MyOracle{};
   auto t = -1.0e100; // std::numeric_limits<double>::min()
   const auto options = Options{2000, 1e-10};
-  const auto [x, _niter, _status] =
-      cutting_plane_optim(oracle, ell, t, options);
-  static_assert(sizeof _niter >= 0, "make compiler happy");
-  static_assert(sizeof _status >= 0, "make compiler happy");
+  const auto result = cutting_plane_optim(oracle, ell, t, options);
+  const auto x = std::get<0>(result); // make clang compiler happy
   REQUIRE(x != Arr1{});
   CHECK(x[0] >= 0.0);
-}
-
-TEST_CASE("xtensor") {
-  auto x = Arr1{};
-  CHECK(x == Arr1{});
-  CHECK_EQ(x, Arr1{});
 }
 
 TEST_CASE("Example 1, test infeasible1") {
@@ -75,10 +66,11 @@ TEST_CASE("Example 1, test infeasible1") {
   auto oracle = MyOracle{};
   auto t = -1.0e100; // std::numeric_limits<double>::min()
   const auto options = Options{2000, 1e-12};
-  const auto [x, _niter, status] = cutting_plane_optim(oracle, ell, t, options);
-  static_assert(sizeof _niter >= 0, "make compiler happy");
-  CHECK_EQ(x, Arr1{});
-  CHECK(status == CutStatus::NoSoln); // no sol'n
+  const auto result = cutting_plane_optim(oracle, ell, t, options);
+  const auto x = std::get<0>(result);
+  const auto s1 = std::get<2>(result);
+  REQUIRE(x == Arr1{});
+  CHECK_EQ(s1, CutStatus::NoSoln); // no sol'n
 }
 
 TEST_CASE("Example 1, test infeasible22") {
@@ -87,8 +79,9 @@ TEST_CASE("Example 1, test infeasible22") {
   auto t = 100.0;
   // wrong initial guess
   const auto options = Options{2000, 1e-12};
-  const auto [x, _niter, status] = cutting_plane_optim(oracle, ell, t, options);
-  static_assert(sizeof _niter >= 0, "make compiler happy");
-  CHECK_EQ(x, Arr1{});
-  CHECK(status == CutStatus::NoSoln); // no sol'n
+  const auto result = cutting_plane_optim(oracle, ell, t, options);
+  const auto x = std::get<0>(result);
+  const auto s1 = std::get<2>(result);
+  REQUIRE(x == Arr1{});
+  CHECK_EQ(s1, CutStatus::NoSoln); // no sol'n
 }

@@ -29,28 +29,38 @@ struct MyQuasicCvxOracle {
    */
   auto assess_optim(const Arr1 &z, double &t) -> std::pair<Cut, bool> {
 
-    auto sqrtx = z[0];
-    auto ly = z[1];
+    double sqrtx = z[0];
+    double ly = z[1];
 
     // constraint 1: exp(x) <= y, or sqrtx**2 <= ly
-    auto fj = sqrtx * sqrtx - ly;
+    double fj = sqrtx * sqrtx - ly;
     if (fj > 0.0) {
-      return {{Arr1{2 * sqrtx, -1.0}, fj}, false};
+      return std::make_pair(std::make_pair(Arr1{2 * sqrtx, -1.0}, fj), false);
     }
 
     // constraint 2: x - y >= 1
-    auto tmp2 = std::exp(ly);
-    auto tmp3 = t * tmp2;
+    double tmp2 = std::exp(ly);
+    double tmp3 = t * tmp2;
     fj = -sqrtx + tmp3;
     if (fj < 0.0) // feasible
     {
       t = sqrtx / tmp2;
-      return {{Arr1{-1.0, sqrtx}, 0}, true};
+      return std::make_pair(std::make_pair(Arr1{-1.0, sqrtx}, 0), true);
     }
 
-    return {{Arr1{-1.0, tmp3}, fj}, false};
+    return std::make_pair(std::make_pair(Arr1{-1.0, tmp3}, fj), false);
   }
 };
+
+TEST_CASE("xtensor") {
+  auto x = Arr1{};
+  CHECK(x == Arr1{});
+  CHECK_EQ(x, Arr1{});
+
+  x = Arr1{1.0, 2.0};
+  CHECK(x != Arr1{});
+  CHECK_NE(x, Arr1{});
+}
 
 TEST_CASE("Quasiconvex 1, test feasible") {
   Ell E{10.0, Arr1{0.0, 0.0}};
@@ -59,11 +69,11 @@ TEST_CASE("Quasiconvex 1, test feasible") {
   auto t = 0.0;
   const auto options = Options{2000, 1e-12};
   const auto result = cutting_plane_optim(P, E, t, options);
-  const auto &x = std::get<0>(result);
+  const auto x = std::get<0>(result);
   REQUIRE(x != Arr1{});
   CHECK_EQ(-t, doctest::Approx(-0.4288673397));
-  CHECK_EQ(x[0] * x[0], doctest::Approx(0.500138));
-  CHECK_EQ(std::exp(x[1]), doctest::Approx(1.64895));
+  CHECK_EQ(x[0] * x[0], doctest::Approx(0.499876));
+  CHECK_EQ(std::exp(x[1]), doctest::Approx(1.64852));
 }
 
 TEST_CASE("Quasiconvex 1, test feasible (stable)") {
@@ -72,7 +82,7 @@ TEST_CASE("Quasiconvex 1, test feasible (stable)") {
   auto t = 0.0;
   const auto options = Options{2000, 1e-12};
   const auto result = cutting_plane_optim(P, E, t, options);
-  const auto &x = std::get<0>(result);
+  const auto x = std::get<0>(result);
   REQUIRE(x != Arr1{});
   // const auto x = *x_opt;
   // CHECK_EQ(-t, doctest::Approx(-0.4288673397));
